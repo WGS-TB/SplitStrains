@@ -743,7 +743,7 @@ def convolveVec(freqVecFlat, proprtionCountThresh=2, boxPoints=4):
 
 if __name__ == "__main__":
 
-    description = """ SplitStrains detects minor/major strains and classify reads. """
+    description = """ SplitStrains detects minor/major strains and classify reads. In addition, it produces 2 plots: histogram and scatter plots for visual inspecting and parameter tunning (see figures in output dir). """
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-c','--classify', action='store_true', help='if this option is specified then the program will run reads classification, otherwise it will detect means and produce histogram png')
     parser.add_argument('-z','--reuse', action='store_true', help='if this flag is specified the program will reuse the csv file from the previous run')
