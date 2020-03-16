@@ -12,8 +12,8 @@ alterAndGenReads=0       # create altered references and generate new reads
 
 export depth=150         # fold coverage
 export numSNP=10        # number of snps to alter in the reference genome
-export start=100000      # where to start on the ref
-export end=3500000
+export start=50000      # where to start on the ref
+export end=4400000
 
 export strainNameA=strainA_${numSNP}snp      # name of the altered strain (major)
 export strainNameB=strainB_${numSNP}snp      # name of the altered strain (minor)
@@ -36,12 +36,13 @@ export REF_PATH=${refDir}/tuberculosis.fna
 export GFF_PATH=${refDir}/tuberculosis.filtered.gff
 export REF_BOWTIE_PATH={refDir}/bowtie-index-tuberculosis
 export SAMPLE_PATH=$dataDir
+export READLENGTH=40
 
 alterRef=0       # create altered references
 genReads=0       # generate reads
 trimQ=16
 reuse=0
-entropyFilter=0.7  # default 0.7
+entropyFilter=0.70  # default 0.7
 doAlignment=1
 depthScale=0.75     # default 0.75
 entropyStep=100      # good value 60

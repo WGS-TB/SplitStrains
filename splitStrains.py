@@ -15,7 +15,7 @@ from scipy.stats import chi2
 from scipy.stats import multinomial
 from scipy.stats import norm
 from scipy.stats import entropy
-from scipy.special import factorial, comb
+from scipy.special import factorial, comb, xlogy
 
 from scipy.optimize import linprog
 from scipy.optimize import minimize, Bounds
@@ -122,8 +122,7 @@ def likelyhood_ratio_test(freqVec, upperLimit, num_iter=30, init_p=0.7, init_err
 
     # likelihood null hypo
     errors = error1 + error2 + minor
-    null_hypo = np.sum(np.log(comb(trials, major)) + errors*np.log(null_err) + major*np.log(1 - 3*null_err))
-
+    null_hypo = np.sum(np.log(comb(trials, major)) + xlogy(errors,null_err) + xlogy(major,1 - 3*null_err))
     # estimate error and probability of major for alternative hypo
     estimated_p, estimated_err = optimize(num_iter, init_p, init_err, major, minor, error1, error2)
     # plotConvergence(estimated_p, estimated_err)
@@ -138,7 +137,7 @@ def likelyhood_ratio_test(freqVec, upperLimit, num_iter=30, init_p=0.7, init_err
     quantiles = np.array([major, minor, errors]).T
     category_probab_vec = [p_major, p_minor, alt_err]
 
-    alt_hypo = np.sum(np.log(multinomial.pmf(quantiles, n=trials, p=category_probab_vec)))
+    alt_hypo = np.sum(multinomial.logpmf(quantiles, n=trials, p=category_probab_vec))
 
     logging.debug(f'null hypothesis log likelihood: {null_hypo}')
     logging.debug(f'alter hypothesis log likelihood: {alt_hypo}')
@@ -151,7 +150,8 @@ def likelyhood_ratio_test(freqVec, upperLimit, num_iter=30, init_p=0.7, init_err
     log_ratio = -2*(null_hypo - alt_hypo)
     tresh = critical
 
-    logging.info(f'Likelihood Ratio Statistic: -2*log(LR) = {int(log_ratio)}, treshold: {int(tresh)}')
+    logging.info(f'Likelihood Ratio Statistic: -2*log(LR) = {log_ratio}, treshold: {int(tresh)}')
+    # logging.info(f'Likelihood Ratio Statistic: -2*log(LR) = {int(log_ratio)}, treshold: {int(tresh)}')
 
     strainType = 'mixed'
 
@@ -763,7 +763,7 @@ if __name__ == "__main__":
     parser.add_argument('-u', metavar='n', type=int, default=90, dest='upperLimit', help='Do not consider proportion of bases beyond n value. Default=90')
     parser.add_argument('-l', metavar='n', type=int, default=10, dest='lowerLimit', help='Do not consider proportion of bases below n value. Default=10')
     parser.add_argument('-m', metavar='n', type=int, default=40, dest='mapQuality', help='Do not consider reads below n map quality. Default=40')
-    parser.add_argument('-q', metavar='n', type=int, default=10, dest='baseQuality', help='Do not consider bases below n quality. Default=10')
+    parser.add_argument('-q', metavar='n', type=int, default=15, dest='baseQuality', help='Do not consider bases below n quality. Default=15')
     parser.add_argument(dest='bamFilePath', metavar='bamFilePath', help='input bam file')
 
     args = parser.parse_args()

@@ -28,13 +28,17 @@ fi
 sampleR1_trimmed=${SAMPLE_PATH}/trimmed/${sampleR1}.fastq.gz
 sampleR2_trimmed=${SAMPLE_PATH}/trimmed/${sampleR2}.fastq.gz
 
+sampleR1_BWA_out=${SAMPLE_PATH}/aligned/trimmed-1-${id}.sai
+sampleR2_BWA_out=${SAMPLE_PATH}/aligned/trimmed-2-${id}.sai
+sampleBAM_out=${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam
+
 if [ $doAlignment == 1 ]
 then
     echo "########################### trimming start: ###############################"
-    java -jar $TRIMMOMATIC_PATH PE $SAMPLE_PATH/$sampleR1 $SAMPLE_PATH/$sampleR2 \
+    java -jar $TRIMMOMATIC_PATH PE -phred33 $SAMPLE_PATH/$sampleR1 $SAMPLE_PATH/$sampleR2 \
         $sampleR1_trimmed $sampleR1_trimmed.se \
         $sampleR2_trimmed $sampleR2_trimmed.se \
-        LEADING:10 TRAILING:10 SLIDINGWINDOW:4:$trimThreshold MINLEN:90
+        LEADING:10 TRAILING:10 SLIDINGWINDOW:4:$trimThreshold MINLEN:$READLENGTH
 
 
     echo "########################### alignment start: ###############################"
@@ -44,9 +48,26 @@ then
         samtools view -S -b ${SAMPLE_PATH}/aligned/bowtie-sample-${id}.sam | samtools sort -o ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam -
         samtools index ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam
     else
-        bwa mem -w 0 -t 8 -R '@RG\tID:mixed\tSM:mixed\tLB:None\tPL:Illumina' $REF_PATH \
-            $sampleR1_trimmed $sampleR2_trimmed \
-            | samtools view -b -S - | samtools sort -o ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam -
+        bwa aln -q 15 -t 6 -R '@RG\tID:mixed\tSM:mixed\tLB:None\tPL:Illumina' $REF_PATH $sampleR1_trimmed > $sampleR1_BWA_out
+
+        bwa aln -q 15 -t 6 -R '@RG\tID:mixed\tSM:mixed\tLB:None\tPL:Illumina' $REF_PATH $sampleR2_trimmed > $sampleR2_BWA_out
+
+        bwa sampe $REF_PATH $sampleR1_BWA_out $sampleR2_BWA_out $sampleR1_trimmed $sampleR2_trimmed | \
+        samtools view -bhS - | \
+        samtools sort -n -o ${SAMPLE_PATH}/aligned/trimmed-${id}.name.sorted.bam -
+        samtools fixmate -m -r ${SAMPLE_PATH}/aligned/trimmed-${id}.name.sorted.bam ${SAMPLE_PATH}/aligned/trimmed-${id}.fixm.sorted.bam
+        samtools sort -o ${SAMPLE_PATH}/aligned/trimmed-${id}.pos.sorted.bam ${SAMPLE_PATH}/aligned/trimmed-${id}.fixm.sorted.bam
+        samtools markdup -r ${SAMPLE_PATH}/aligned/trimmed-${id}.pos.sorted.bam ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam
+
+        rm $sampleR1_BWA_out \
+            $sampleR2_BWA_out \
+            ${SAMPLE_PATH}/aligned/trimmed-${id}.fixm.sorted.bam \
+            ${SAMPLE_PATH}/aligned/trimmed-${id}.pos.sorted.bam \
+            ${SAMPLE_PATH}/aligned/trimmed-${id}.name.sorted.bam
+
+        # bwa mem -w 0 -t 8 -R '@RG\tID:mixed\tSM:mixed\tLB:None\tPL:Illumina' $REF_PATH \
+        #     $sampleR1_trimmed $sampleR2_trimmed \
+        #     | samtools view -b -S - | samtools sort -o ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam -
 
         samtools index ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam
     fi
