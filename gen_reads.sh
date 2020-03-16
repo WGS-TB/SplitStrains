@@ -12,8 +12,8 @@ art_illumina -ss HSXn -i $ref_strainA -o ${artOutput}${strainNameA}_R -l 150 -qL
 art_illumina -ss HSXn -i $ref_strainB -o ${artOutput}${strainNameB}_R -l 150 -qL 21 -qU 31 -qs -9 -qs2 -8 -na -f $proportionB -p -s 10 -m 300
 
 # concat
-cat ${artOutput}${strainNameA}_R1.fq ${artOutput}${strainNameB}_R1.fq > ${dataDir}/art-sample_${id}_R1.fq
-cat ${artOutput}${strainNameA}_R2.fq ${artOutput}${strainNameB}_R2.fq > ${dataDir}/art-sample_${id}_R2.fq
+cat ${artOutput}${strainNameA}_R1.fq ${artOutput}${strainNameB}_R1.fq > ${SAMPLE_PATH}/art-sample_${id}_R1.fq
+cat ${artOutput}${strainNameA}_R2.fq ${artOutput}${strainNameB}_R2.fq > ${SAMPLE_PATH}/art-sample_${id}_R2.fq
 
 
 # get rid of original reads

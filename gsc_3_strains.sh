@@ -18,13 +18,13 @@ export strainNameA=3_strainA_${numSNP}      # name of the altered strain (major)
 export strainNameB=3_strainB_${numSNP}      # name of the altered strain (minor)
 export strainNameC=3_strainC_${numSNP}
 
-export dataDir=data/mixed_synth_3_samples_${numSNP}snps             # path where to output all fastQ files
+export SAMPLE_PATH=data/mixed_synth_3_samples_${numSNP}snps             # path where to output all fastQ files
 export refDir=refs      # directory for all references references
-export ref_strainA=${dataDir}/${strainNameA}.fasta   # path to a reference of a major strain
-export ref_strainB=${dataDir}/${strainNameB}.fasta   # path to a reference of a minor strain
-export ref_strainC=${dataDir}/${strainNameC}.fasta
+export ref_strainA=${SAMPLE_PATH}/${strainNameA}.fasta   # path to a reference of a major strain
+export ref_strainB=${SAMPLE_PATH}/${strainNameB}.fasta   # path to a reference of a minor strain
+export ref_strainC=${SAMPLE_PATH}/${strainNameC}.fasta
 
-export artOutput=${dataDir}/strain_                                 # prefix of the output from art read generator, these files are tmp
+export artOutput=${SAMPLE_PATH}/strain_                                 # prefix of the output from art read generator, these files are tmp
 
 
 #######################################################
@@ -35,7 +35,7 @@ export TRIMMOMATIC_PATH=~/bin/Trimmomatic-0.36/trimmomatic-0.36.jar
 export REF_PATH=${refDir}/tuberculosis.fna
 export GFF_PATH=${refDir}/tuberculosis.gff
 export REF_BOWTIE_PATH={refDir}/bowtie-index-tuberculosis
-export SAMPLE_PATH=$dataDir
+export SAMPLE_PATH=$SAMPLE_PATH
 # export SAMPLE_PATH=./data/mixed_data
 
 alterRef=0       # create altered references
@@ -54,9 +54,9 @@ model='gmm'
 # check if need to generate new references
 if [ $alterRef -eq 1 ]; then
     echo "altering reference"
-    python alter_ref.py $strainNameA $start $end $numSNP $REF_PATH $dataDir
-    python alter_ref.py $strainNameB $start $end $numSNP $REF_PATH $dataDir
-    python alter_ref.py $strainNameC $start $end $numSNP $REF_PATH $dataDir
+    python alter_ref.py $strainNameA $start $end $numSNP $REF_PATH $SAMPLE_PATH
+    python alter_ref.py $strainNameB $start $end $numSNP $REF_PATH $SAMPLE_PATH
+    python alter_ref.py $strainNameC $start $end $numSNP $REF_PATH $SAMPLE_PATH
 
     echo "bwa index refs"
     bwa index $ref_strainA
