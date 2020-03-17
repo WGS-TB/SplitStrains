@@ -24,8 +24,8 @@ export REF_BOWTIE_PATH={$refDir}/bowtie-index-tuberculosis
 
 export depth=80          # fold coverage
 export numSNP=80         # number of snps to alter in the reference genome
-export start=50000       # where to start on the ref
-export end=4400000       # where to end on the ref
+export start=50000       # where splitstrains will start on the ref
+export end=4400000       # where splitstrains ends on the ref
 
 ####################################
 #### Paths to data directory    ####

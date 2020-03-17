@@ -757,7 +757,7 @@ if __name__ == "__main__":
     parser.add_argument('-i', metavar='n', default=150, dest='step', type=int, help='step for snp cluster detection. Default=150')
     parser.add_argument('-g', metavar='n', default=2, type=int, dest='components', help='gmm model components. Default=2')
     parser.add_argument('-ft', metavar='n', default=1, dest='proportion_count_threshold', help='Filter out proportions which have count less than n. Default=1')
-    parser.add_argument('-fe', metavar='n', default=1, dest='entropy_thresh', help='Entropy filtering threshold. Set to 0 to turn off entropy filtering. Default=1.0')
+    parser.add_argument('-fe', metavar='n', default=0.7, dest='entropy_thresh', help='Entropy filtering threshold. Set to 0 to turn off entropy filtering. Default=0.7')
     parser.add_argument('-fes', metavar='n', type=int, default=70, dest='entropy_step', help='Entropy filtering step. Defines the step length on freqVec.csv for entropy filtering computation. Default=200')
     parser.add_argument('-fd', metavar='n', required=True, default=100, dest='depthThreshold', type=int, help='Do not consider pileup columns with the depth less than n. Higher values help to reduce noise for gmm. Good values are avg depth of a bam file. Default=100')
     parser.add_argument('-u', metavar='n', type=int, default=90, dest='upperLimit', help='Do not consider proportion of bases beyond n value. Default=90')
