@@ -9,7 +9,7 @@ Grounded in a rigorous statistical framework, it is based on formulating, for a 
 
 ### Requirements:
 Python 3.6.9  
-Python libraries listed in *requirements.txt*  
+Python libraries listed in *requirements.txt*. This can be used for automatic pip install.  
 Optional: conda 4.5.12  
 Additional software:
 1. bwa 0.7.17 (read aligner)
