@@ -1,11 +1,30 @@
 # this script filters a gff file by removing entries based on locus_tag field
 # if locus_tag field is in excluded list, the entry is ignored
 
-fileEx = '/home/user1/Documents/lab/DrugResistance/splitStrains/refs/excluded2.txt'
-fileIn = '/home/user1/Documents/lab/DrugResistance/splitStrains/refs/tuberculosis.gff'
-fileOut = '/home/user1/Documents/lab/DrugResistance/splitStrains/refs/tuberculosis.filtered.gff'
+
+def isCloseInterval(start, end, excludedInterval, startDist=50, endDist=50):
+    """ This function takes an interval and compares it with intervals in the excludedIntervals list.
+    If the end points are close enough to some interval in the list return True """
+
+    for interval in excludedIntervals:
+        if abs(interval[0]-start) < startDist and abs(interval[1]-end) < endDist:
+            # print('close to the excluded interval')
+            return True
+
+    return False
+
+
+
+fileEx = '/home/user1/Documents/lab/SplitStrains/refs/excluded2.txt'
+fileExIntervals = '/home/user1/Documents/lab/SplitStrains/refs/excluded-intervals.txt'
+
+fileIn = '/home/user1/Documents/lab/SplitStrains/refs/tuberculosis.gff'
+fileOut = '/home/user1/Documents/lab/SplitStrains/refs/tuberculosis.filtered-intervals.gff'
 
 excluded = []
+excludedIntervals = []
+
+
 processedGenes = []
 
 # open the list of genes to exclude
@@ -14,7 +33,11 @@ with open(fileEx, 'r') as e:
         splitLine = line.split()
         excluded.append(splitLine[0])
 
-print(excluded, ' ,size: ', len(excluded))
+# open the list of intervals to exclude
+with open(fileExIntervals, 'r') as e:
+    for line in e:
+        splitLine = line.rstrip().split('\t')
+        excludedIntervals.append([int(splitLine[0]), int(splitLine[1])])
 
 count = 0
 
@@ -32,13 +55,13 @@ with open(fileIn, 'r') as f:
 
             # if not the header do other checks
             else:
-                regionStart = splitLine[3]
-                regionEnd = splitLine[4]
+                regionStart = int(splitLine[3])
+                regionEnd = int(splitLine[4])
                 fields = splitLine[8].split(';')    # get variable like fields
                 locus_tag = fields[-1].split('=')[-1]   # get locus tag
 
-                if locus_tag not in excluded:
-                    o.write(line)
+                if locus_tag not in excluded and not isCloseInterval(regionStart, regionEnd, excludedIntervals):
+                        o.write(line)
                 else:
                     processedGenes.append(locus_tag)
                     count += 1
@@ -46,4 +69,4 @@ with open(fileIn, 'r') as f:
 print('excluded count: ', count)
 
 notProcessed = [set(excluded) - set(processedGenes)]
-print(notProcessed)
+# print(notProcessed)

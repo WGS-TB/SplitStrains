@@ -12,26 +12,33 @@ set -e
 ####################################
 export TRIMMOMATIC_PATH=~/bin/Trimmomatic-0.36/trimmomatic-0.36.jar
 
-# export SAMPLE_PATH=data/mixed_data                  # path to real samples. Comment this to generate synth samples
 export refDir=refs                                    # directory for all references references
+# export REF_PATH=${refDir}/tuberculosis-mixInfect-ref.fasta
 export REF_PATH=${refDir}/tuberculosis.fna
-export GFF_PATH=${refDir}/tuberculosis.filtered.gff
+export GFF_PATH=${refDir}/tuberculosis.filtered-intervals.gff
 export REF_BOWTIE_PATH={$refDir}/bowtie-index-tuberculosis
+
 
 ####################################
 #### Read generation parameters ####
 ####################################
-
-export depth=80          # fold coverage
-export numSNP=80         # number of snps to alter in the reference genome
+export numSNP=100         # number of snps to alter in the reference genome
+export depth=150          # fold coverage
 export start=50000       # where splitstrains will start on the ref
 export end=4400000       # where splitstrains ends on the ref
+
 
 ####################################
 #### Paths to data directory    ####
 ####################################
-export SAMPLE_PATH=data/mixed_synth_samples_${numSNP}snps        # path where to output all synth fastQ files
+# export SAMPLE_PATH=data/mixed_synth_samples_${numSNP}snps         # path where to output all synth fastQ files
+export SAMPLE_PATH=data/mixed_data                                  # path to real samples.
+# export SAMPLE_PATH=data/mixInfect_data                                # path to mixInfect samples.
 
+
+####################################
+#### Strains naming vars        ####
+####################################
 export strainNameA=strainA_${numSNP}snp      # name of the altered strain (major)
 export strainNameB=strainB_${numSNP}snp      # name of the altered strain (minor)
 
@@ -48,12 +55,12 @@ export artOutput=${SAMPLE_PATH}/strain_                          # prefix of the
 export READLENGTH=40    # trimmomatic minimum read length
 
 alterRef=0             # create altered references. Skip if 0
-genReads=1             # generate reads. Skip if 0
-doAlignment=1          # align generated reads. Skip if 0
+genReads=0             # generate reads. Skip if 0
+doAlignment=0          # align generated reads. Skip if 0
 trimQ=16               # parameter for Trimmomatic
-reuse=0                # splitStrains will reuse the csv from prev run. Set to 1 after the first run!
+reuse=1                # splitStrains will reuse the csv from prev run. Set to 1 after the first run!
 entropyFilter=0.70     # default 0.7
-depthScale=0.75        # default 0.75
+depthScale=0.7        # default 0.75
 entropyStep=60        # good value 60
 split=0                # attempt to split strains
 components=2           # number of strains
@@ -76,18 +83,20 @@ mkdir -p $SAMPLE_PATH/aligned   # directory for bam files
 mkdir -p $SAMPLE_PATH/trimmed   # directory for trimmed files
 mkdir -p $SAMPLE_PATH/output    # directory for splitStrains.py output
 
-mix=( 95 90 80 70 60 55 50 )    # proportions of major strain
-# mix=( `seq 50` )
+# mix=( 95 90 85 80 70 60 55 50 )    # my synth data
+mix=( `seq 60` )                   # Inaki data
+# mix=( `seq 36` )                     # mixInfect data
+
 for id in ${mix[@]}
 do
     # output log file from splitStrains stdout
     resultFile="results-id${id}_trim${trimQ}.txt"
 
     # The project masks fastq files as sample{id}_1.fastq.gz and sample{id}_2.fastq.gz
-    sampleR1="art-sample_${id}_R1.fq"         # synth sample
-    sampleR2="art-sample_${id}_R2.fq"         # synth sample
-    # sampleR1="sample${id}_1.fastq.gz"       # real data sample
-    # sampleR2="sample${id}_2.fastq.gz"       # real data sample
+    # sampleR1="art-sample_${id}_R1.fq"         # synth sample
+    # sampleR2="art-sample_${id}_R2.fq"         # synth sample
+    sampleR1="sample${id}_1.fastq.gz"       # real data sample
+    sampleR2="sample${id}_2.fastq.gz"       # real data sample
 
     # generate reads using art_illumina
     if [ $genReads -eq 1 ]; then

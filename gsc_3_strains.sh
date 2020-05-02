@@ -65,7 +65,7 @@ if [ $alterRef -eq 1 ]; then
 fi
 
 
-mix=( 35-50-15 ) # distance between the means increased
+mix=( 25-40-35 ) # distance between the means increased
 # mix=( 10-25-65 15-30-55 20-35-45 25-40-35 30-45-25 35-50-15 ) # distance between the means increased
 
 for id in ${mix[@]}

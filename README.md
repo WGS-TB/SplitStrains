@@ -31,7 +31,7 @@ python splitStrains.py --reuse -fe 0.7 -r ref_file -b gff_file -g 2 -s 100 -e 40
 ```
 The directory *output_dir* contains *freqVec.csv* and plots for visual inspection.
 ### Notes:    
-Before running *splitStrains.py*, make sure that <b>sorted and indexed BAM's</b>  aligned sequences and <b>indexed </b> fasta reference have the same sequence ID.  
+Before running *splitStrains.py*, make sure that <b>sorted and indexed BAM's</b>  aligned sequences and <b>indexed </b> fasta reference have the same sequence ID. In other words, bam files must be used with the same reference which was used for alignment.
 For example, if BAM aligned sequences refer to "*gi|41353971|emb|AL123456.2|* " then the fasta reference file should start with "*>gi|41353971|emb|AL123456.2|* ".
 
 ### Tips:

@@ -27,6 +27,8 @@ AXES_FONT_SIZE = 8
 LABEL_FONT_SIZE = 8
 DPI = 300
 PLOT_ENTROPY = False
+CHI2_SCALE = 400
+DF = 1
 
 sns.set(style="darkgrid")
 sns.set_context("paper", rc={"lines.linewidth": 1, "patch.linewidth" : 0.5 })
@@ -37,18 +39,47 @@ plt.rc('xtick', labelsize=TICK_FONT_SIZE)
 plt.rc('ytick', labelsize=TICK_FONT_SIZE)
 plt.rc('axes', labelsize=AXES_FONT_SIZE)
 
+def writeResult(fileName, LR, thresh, alpha, proportions):
+    """ This outputs tab delimited result into the stdout """
+    path, fileName = os.path.split(fileName)
+    proportions = ''.join(['{:.2f}'.format(p)+' ' for p in proportions])
+    p_val = 1-chi2.cdf(LR, DF, loc=0, scale=CHI2_SCALE)
+
+    # compute log-p-value
+    if not np.isclose(p_val, 0):
+        log_p_val = '{:.3f}'.format(np.log(p_val))
+    else:
+        log_p_val = '-inf'
+
+    # round up p-val for printing
+    p_val = '{:.3f}'.format(p_val)
+
+    print("file\talpha\tmin_LR_thresh\tLR_statistic\tlog-p-value\tp-value\tproportions")
+    print(f"{fileName}\t{alpha}\t{int(thresh)}\t{int(LR)}\t{log_p_val}\t{p_val}\t{proportions}")
+
+
 def roundUP(vec):
     """ This function rounds up means to integers so that the result sums to 100.
-        If the means are not in proportion i.e. 70 and 10, then LP solver yields an error. """
+        If the means are not in proportion i.e. 70 and 10, then LP solver yields an error.
+        However, this behavior is mitigated by normalization by the sum of all proportions.
+        """
     compons = len(vec)
-    c = np.array([1 for i in range(0,compons)] + [-100])
-    A = -c
-    b = np.zeros((1,1))
-    r = 1
-    intVec = vec.astype(int)
-    bound = [(val-r, val+r) for val in intVec] + [(1,1)]
-    res = linprog(c, A_ub=A, b_ub=b, bounds=bound)
-    return res['x'][:-1]
+
+    # Do min x_1 + x_2 + x_3 s.t. x_1 + x_2 + x_3 = 100 and val-1 <= x_i <= val+1 where val is proportion i
+    if compons > 2:
+        c = np.array([1 for i in range(0,compons)])
+        A = np.ones((1, compons))
+        b = 100
+        r = 1
+        intVec = vec.astype(int)
+        bound = [(val-r, val+r) for val in intVec]
+        res = linprog(c, A_eq=A, b_eq=b, bounds=bound)['x']
+
+    else:
+        major = max(vec)
+        res = [major, 100 - major]
+
+    return res
 
 
 def plotConvergence(estimated_p, estimated_err):
@@ -97,7 +128,7 @@ def optimize(num_iter, init_p, init_err, M, m, c_1, c_2):
     return [estimated_p, estimated_err]
 
 
-def likelyhood_ratio_test(freqVec, upperLimit, num_iter=30, init_p=0.7, init_err=0.001):
+def likelyhood_ratio_test(freqVec, alpha_level, upperLimit, num_iter=30, init_p=0.7, init_err=0.001):
     """ This function runs likelyhood ratio test: Under null hypothesis we assume a single strain, under alternative we assume 2 strains are present """
     # convert proportion to count
     depthVec = freqVec[:,-1]
@@ -143,22 +174,13 @@ def likelyhood_ratio_test(freqVec, upperLimit, num_iter=30, init_p=0.7, init_err
     logging.debug(f'alter hypothesis log likelihood: {alt_hypo}')
 
     # Run Pearson's chi2 test on likelihood ratio statistic
-    df = 2
-    alpha = 0.95
-    scale = 100
-    critical = chi2.ppf(alpha, df, loc=0, scale=scale)
+    probab = 1 - alpha_level
+    tresh = chi2.ppf(probab, DF, loc=0, scale=CHI2_SCALE)
     log_ratio = -2*(null_hypo - alt_hypo)
-    tresh = critical
 
-    logging.info(f'Likelihood Ratio Statistic: -2*log(LR) = {log_ratio}, treshold: {int(tresh)}')
-    # logging.info(f'Likelihood Ratio Statistic: -2*log(LR) = {int(log_ratio)}, treshold: {int(tresh)}')
+    logging.info(f'Likelihood Ratio Statistic: -2*log(LR) = {int(log_ratio)}, treshold: {int(tresh)}')
 
-    strainType = 'mixed'
-
-    if  log_ratio < tresh:
-        strainType = 'single'
-
-    return strainType
+    return tresh, log_ratio
 
 
 def fitDataGMM(data, components=2):
@@ -278,7 +300,11 @@ class Model():
         elif type(self.model) == mixture.GaussianMixture:
             self.modelName = 'GMM'
             self.means = self.model.means_.flatten()
-            self.means = self.means/np.sum(self.means)*100
+
+            # normalize if more than 2 components. This is necessary for roundUP function.
+            if self.model.n_components > 2:
+                self.means = self.means/np.sum(self.means)*100
+
             self.stdDivs = np.sqrt(gmm.covariances_.flatten())
 
     def get_weights(self):
@@ -298,7 +324,8 @@ class Model():
             return self.distros[component_index].log_likelihood(x, depth)
 
         elif type(self.model) == mixture.GaussianMixture:
-            return norm.logpdf(x, self.means[component_index], self.stdDivs[component_index])
+            return norm.logpdf(x, self.means[component_index], 1)   # tmp edit, set stdDiv to 1 for all components
+            # return norm.logpdf(x, self.means[component_index], self.stdDivs[component_index])
 
     def get_num_components(self):
         """ Get number of components."""
@@ -515,7 +542,7 @@ def computeDataFromSam(freqVec, samfile, refFile, baseQuality, mapQuality, regio
             # calculate char proportions at snp
 
             if char == refBase:
-                # so if char equals reference char we set it to negative value so it is ignored in model fitting and historgram
+                # if char equals reference char we set it to negative value so it is ignored in model fitting and historgram
                 # however, we flip the sign to positive when doing classification in bayesClassifyReads()
                 charProp = -pile.count(char) / depth * 100
             else:
@@ -596,8 +623,9 @@ def plotHist(outputDir, originalFreqVecFlat,  freqVecFlat, gmm, figureFileName):
     means = gmm.means_.flatten()
     stdDiv = np.sqrt(gmm.covariances_.flatten())
     weights = gmm.weights_.flatten()
+    # title1 = f'Strain means {means.astype(int)} (log scale) '
 
-    title1 = f'Strain means {means.astype(int)} (log scale) '
+    title1 = 'Visual inspection of frequencies (log scale)'
     title2 = 'GMM pdf'
 
     fig, axs = plt.subplots(2,1)
@@ -758,6 +786,7 @@ if __name__ == "__main__":
     parser.add_argument('-g', metavar='n', default=2, type=int, dest='components', help='gmm model components. Default=2')
     parser.add_argument('-ft', metavar='n', default=1, dest='proportion_count_threshold', help='Filter out proportions which have count less than n. Default=1')
     parser.add_argument('-fe', metavar='n', default=0.7, dest='entropy_thresh', help='Entropy filtering threshold. Set to 0 to turn off entropy filtering. Default=0.7')
+    parser.add_argument('-a', metavar='n', default=0.05, dest='alpha_level', help='Significance level alpha. The probability of rejecting a single strain hypothesis when it is true. Default=0.05')
     parser.add_argument('-fes', metavar='n', type=int, default=70, dest='entropy_step', help='Entropy filtering step. Defines the step length on freqVec.csv for entropy filtering computation. Default=200')
     parser.add_argument('-fd', metavar='n', required=True, default=100, dest='depthThreshold', type=int, help='Do not consider pileup columns with the depth less than n. Higher values help to reduce noise for gmm. Good values are avg depth of a bam file. Default=100')
     parser.add_argument('-u', metavar='n', type=int, default=90, dest='upperLimit', help='Do not consider proportion of bases beyond n value. Default=90')
@@ -787,6 +816,7 @@ if __name__ == "__main__":
     ethreshold = float(args.entropy_thresh)
     useModel = args.model
     reuseFreqVec = args.reuse
+    alpha_level = args.alpha_level
 
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO, stream=sys.stdout)
 
@@ -878,15 +908,17 @@ if __name__ == "__main__":
 
     # call single strain if not enough variation is found
     if len(freqVec) < 5:
-        logging.info(f'Not enough data points. result: {bamFilePath} Single strain.')
+        logging.info(f'Not enough variant sites.')
+        writeResult(bamFilePath, LR , thresh, alpha_level, [1])
         exit()
 
     # test null and alt hypthesis
-    strainType = likelyhood_ratio_test(freqVec, upperLimit, num_iter, init_p, init_err)
+    thresh, LR = likelyhood_ratio_test(freqVec, alpha_level, upperLimit, num_iter, init_p, init_err)
 
     # if test calls single strain exit
-    if strainType == 'single':
-        logging.info(f'LR test result: {bamFilePath} Single strain.')
+    if LR < thresh:
+        # logging.info(f'LR test result: {bamFilePath} Single strain.')
+        writeResult(bamFilePath, LR , thresh, alpha_level, [1])
         exit()
 
 
@@ -901,24 +933,34 @@ if __name__ == "__main__":
     freqVecFlat = freqVecFlat[freqVecFlat < upperLimit]
 
     # TODO change box size to a parameter
-    freqVecFlat = convolveVec(freqVecFlat, proprtionCountThresh, 3)
+    freqVecFlat = convolveVec(freqVecFlat, proprtionCountThresh, [1])
 
     if freqVecFlat.size < components:
-        logging.info(f'Not enough SNP frequencies. result: {bamFilePath} Single strain.')
+        logging.info(f'Not enough SNP frequencies.')
+        writeResult(bamFilePath, LR , thresh, alpha_level, [1])
         exit()
 
     # Fit data with Gaussian Mixture
     gmm = fitDataGMM(freqVecFlat, components)
     init_proportions = gmm.means_.flatten()/100
-    # Fit data with Binomial Mixture
-    avgDepth = int(freqVec[:,-1].mean())
-    bmm = fitDataBMM(freqVec, avgDepth, lowerLimit, upperLimit, init_proportions, components)
-    bmm.set_prob(bmm.get_proportions()/np.sum(bmm.get_proportions()))
+
+    for p in init_proportions:
+        if np.isclose(p,0):
+            logging.error('Unable to fit the data. Check if depth filtering, entropy filtering or intervals are reasonable.')
+            exit()
+
+
     # specify which model to use
     if useModel == 'bmm':
+        # Fit data with Binomial Mixture
+        avgDepth = int(freqVec[:,-1].mean())
+        bmm = fitDataBMM(freqVec, avgDepth, lowerLimit, upperLimit, init_proportions, components)
+        bmm.set_prob(bmm.get_proportions()/np.sum(bmm.get_proportions()))
         model = Model(bmm)
+
     elif useModel == 'gmm':
         model = Model(gmm)
+
     else:
         logging.error('Wrong model name: Use either gmm or bmm.')
         exit()
@@ -927,7 +969,6 @@ if __name__ == "__main__":
 
 
     means = model.get_strain_proportions()
-
     means = roundUP(means)
 
     if components == 2:
@@ -935,7 +976,7 @@ if __name__ == "__main__":
             logging.warning(f'result: Could not fit the data {bamFilePath}. Incorrect means:{means[0]}, {means[1]}. Possibly 50:50 split.')
             exit()
 
-    logging.info(f'result: {bamFilePath} {means/np.sum(means)}')
+    writeResult(bamFilePath, LR , thresh, alpha_level, means/np.sum(means))
 
     originalFrecVecFlat = originalFreqVec[:,:-2].flatten()
     originalFrecVecFlat = originalFrecVecFlat[originalFrecVecFlat > 2]

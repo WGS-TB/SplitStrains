@@ -101,9 +101,9 @@ then
 
     if [ $split == 1 ]
     then
-        python splitStrains.py -c -z -mo $model -fe $entropyFilter -fes $entropyStep -g $components -f sample-${id} -s $startRegion -e $endRegion -r $REF_PATH -o $SAMPLE_PATH/output/$outputDir -fd $depth ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam | tee -a $SAMPLE_PATH/output/$resultFile
+        python splitStrains.py -c -z -mo $model -fe $entropyFilter -fes $entropyStep -g $components -f sample-${id} -s $startRegion -e $endRegion -r $REF_PATH -o $SAMPLE_PATH/output/$outputDir -fd $depth ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam | tee $SAMPLE_PATH/output/$resultFile
     else
-        python splitStrains.py -z -mo $model -fe $entropyFilter -fes $entropyStep -g $components -f sample-${id} -s $startRegion -e $endRegion -r $REF_PATH -b $GFF_PATH -o $SAMPLE_PATH/output/$outputDir -fd $depth ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam | tee -a $SAMPLE_PATH/output/$resultFile
+        python splitStrains.py -z -mo $model -fe $entropyFilter -fes $entropyStep -g $components -f sample-${id} -s $startRegion -e $endRegion -r $REF_PATH -b $GFF_PATH -o $SAMPLE_PATH/output/$outputDir -fd $depth ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam | tee $SAMPLE_PATH/output/$resultFile
     fi
 else
     # Compute avg depth of the bam file
@@ -121,8 +121,8 @@ else
 
     if [ $split == 1 ]
     then
-        python splitStrains.py -b $GFF_PATH -c -mo $model -fe $entropyFilter -fes $entropyStep -g $components -f sample-${id} -s $startRegion -e $endRegion -r $REF_PATH -o $SAMPLE_PATH/output/$outputDir/ -fd $depth ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam | tee -a $SAMPLE_PATH/output/$resultFile
+        python splitStrains.py -b $GFF_PATH -c -mo $model -fe $entropyFilter -fes $entropyStep -g $components -f sample-${id} -s $startRegion -e $endRegion -r $REF_PATH -o $SAMPLE_PATH/output/$outputDir/ -fd $depth ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam | tee $SAMPLE_PATH/output/$resultFile
     else
-        python splitStrains.py -b $GFF_PATH -mo $model -fe $entropyFilter -fes $entropyStep -g $components -f sample-${id} -s $startRegion -e $endRegion -r $REF_PATH -b $GFF_PATH -o $SAMPLE_PATH/output/$outputDir -fd $depth ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam | tee -a $SAMPLE_PATH/output/$resultFile
+        python splitStrains.py -b $GFF_PATH -mo $model -fe $entropyFilter -fes $entropyStep -g $components -f sample-${id} -s $startRegion -e $endRegion -r $REF_PATH -b $GFF_PATH -o $SAMPLE_PATH/output/$outputDir -fd $depth ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam | tee $SAMPLE_PATH/output/$resultFile
     fi
 fi
