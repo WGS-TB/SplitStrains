@@ -519,7 +519,16 @@ def computeDataFromSam(freqVec, samfile, refFile, baseQuality, mapQuality, regio
     chromosome = samfile.references[0]
 
     # flag_filter=3 means we get reads that are mapped in a proper pair, flag_filter=8 ignore reads that have unmapped mate
-    for pileupcolumn in samfile.pileup(chromosome, regionStart, regionEnd, truncate=True, min_base_quality=baseQuality, min_mapping_quality=mapQuality, fastafile=refFile, stepper='samtools', flag_require=3, flag_filter=3852):
+    if single_ended == True:
+        pileup_flag_require = 0
+        pileup_flag_filter = 3844
+    else:
+        pileup_flag_require = 3
+        pileup_flag_filter = 3852
+
+    for pileupcolumn in samfile.pileup(chromosome, regionStart, regionEnd, truncate=True, min_base_quality=baseQuality,
+        min_mapping_quality=mapQuality, fastafile=refFile, stepper='samtools', flag_require=pileup_flag_require,
+        flag_filter=pileup_flag_filter):
 
         i = pileupcolumn.pos
         pile = ''.join(pileupcolumn.get_query_sequences(mark_ends=False)).lower()
@@ -793,6 +802,7 @@ if __name__ == "__main__":
     parser.add_argument('-l', metavar='n', type=int, default=10, dest='lowerLimit', help='Do not consider proportion of bases below n value. Default=10')
     parser.add_argument('-m', metavar='n', type=int, default=40, dest='mapQuality', help='Do not consider reads below n map quality. Default=40')
     parser.add_argument('-q', metavar='n', type=int, default=15, dest='baseQuality', help='Do not consider bases below n quality. Default=15')
+    parser.add_argument('--singleend', action='store_true', help='Allow single-ended reads')
     parser.add_argument(dest='bamFilePath', metavar='bamFilePath', help='input bam file')
 
     args = parser.parse_args()
@@ -817,6 +827,7 @@ if __name__ == "__main__":
     useModel = args.model
     reuseFreqVec = args.reuse
     alpha_level = args.alpha_level
+    single_ended = args.singleend
 
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO, stream=sys.stdout)
 
@@ -845,6 +856,8 @@ if __name__ == "__main__":
     logging.info(f'regionStart: {regionStart}, regionEnd: {regionEnd}')
     logging.info(f'depth threshold: {depthThreshold}')
     logging.info(f'entropy threshold: {ethreshold}')
+    if single_ended:
+        logging.info(f'Using unpaired reads')
 
     intervals = []  # list of Interval objects. This will be populated if gff file is provided
     freqVec = []    # vector format [a prop, c prop, t prop, g prop, position, depth]
