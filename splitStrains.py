@@ -27,7 +27,7 @@ AXES_FONT_SIZE = 8
 LABEL_FONT_SIZE = 8
 DPI = 300
 PLOT_ENTROPY = False
-CHI2_SCALE = 400
+CHI2_SCALE = 500 # default 500
 DF = 1
 
 sns.set(style="darkgrid")
@@ -379,9 +379,9 @@ def getIntervals(gffFilePath, regionStart, regionEnd):
         if lineStart[0] == '#':
             continue
 
-        # parse only gene regions
+        # parse only gene regions and repeat_regions
         feature = lineParams[2]
-        if feature != 'gene':
+        if feature != 'gene' and feature != 'repeat_region':
             continue
 
         # try getting region
@@ -663,29 +663,6 @@ def plotHist(outputDir, originalFreqVecFlat,  freqVecFlat, gmm, figureFileName):
         return 1
 
 
-def computeData(filename):
-    """
-    Depricated method.
-    Build matrix of proportions and a vector of features out of a pileup file. This method requires some preprocessing for pileup.
-    """
-    datafile = np.genfromtxt(filename, dtype='str')
-
-    vecLen = np.vectorize(len)
-    datafile[:,1] = np.char.lower(datafile[:,1])
-    posIndexCol = datafile[:,0].reshape(len(datafile[:,0]),1)
-    depthAtPos = vecLen(datafile[:,1])
-    countMatrix = np.dstack((
-        np.char.count(datafile[:,1],'a'),
-        np.char.count(datafile[:,1],'c'),
-        np.char.count(datafile[:,1],'t'),
-        np.char.count(datafile[:,1],'g')))[0]
-    data = np.divide(countMatrix[:], depthAtPos[:,None])*100     # percentages of all alternative alleles for each position in the pile
-    freqVec = data.flatten()
-    freqVec = freqVec[freqVec > TRESHOLD]
-    data = np.append(posIndexCol, data, axis=1).astype(np.float_)
-    return [freqVec, data]
-
-
 def filterVec(freqVec, depthThreshold, ethreshold, entropy_step, lowerLimit, upperLimit):
     """ This function encapsulats 2 filtering steps: depth filtering and entropy filtering """
     # do depth filtering.
@@ -788,11 +765,12 @@ if __name__ == "__main__":
     parser.add_argument('-fe', metavar='n', default=0.7, dest='entropy_thresh', help='Entropy filtering threshold. Set to 0 to turn off entropy filtering. Default=0.7')
     parser.add_argument('-a', metavar='n', default=0.05, dest='alpha_level', help='Significance level alpha. The probability of rejecting a single strain hypothesis when it is true. Default=0.05')
     parser.add_argument('-fes', metavar='n', type=int, default=70, dest='entropy_step', help='Entropy filtering step. Defines the step length on freqVec.csv for entropy filtering computation. Default=200')
-    parser.add_argument('-fd', metavar='n', required=True, default=100, dest='depthThreshold', type=int, help='Do not consider pileup columns with the depth less than n. Higher values help to reduce noise for gmm. Good values are avg depth of a bam file. Default=100')
+    parser.add_argument('-fd', metavar='n', required=True, default=75, dest='depthThreshold', type=int, help='Do not consider pileup columns with the depth percentage less than n percent. Setting this to 75 means ignore sites with depth coverage less than 75% of the bam avg depth. Default=75')
     parser.add_argument('-u', metavar='n', type=int, default=90, dest='upperLimit', help='Do not consider proportion of bases beyond n value. Default=90')
     parser.add_argument('-l', metavar='n', type=int, default=10, dest='lowerLimit', help='Do not consider proportion of bases below n value. Default=10')
-    parser.add_argument('-m', metavar='n', type=int, default=40, dest='mapQuality', help='Do not consider reads below n map quality. Default=40')
-    parser.add_argument('-q', metavar='n', type=int, default=15, dest='baseQuality', help='Do not consider bases below n quality. Default=15')
+    # This were prev values mapq = 40 and baseq = 15
+    parser.add_argument('-m', metavar='n', type=int, default=20, dest='mapQuality', help='Do not consider reads below n map quality. Default=20')
+    parser.add_argument('-q', metavar='n', type=int, default=10, dest='baseQuality', help='Do not consider bases below n quality. Default=10')
     parser.add_argument(dest='bamFilePath', metavar='bamFilePath', help='input bam file')
 
     args = parser.parse_args()
@@ -816,7 +794,7 @@ if __name__ == "__main__":
     ethreshold = float(args.entropy_thresh)
     useModel = args.model
     reuseFreqVec = args.reuse
-    alpha_level = args.alpha_level
+    alpha_level = float(args.alpha_level)
 
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO, stream=sys.stdout)
 
@@ -843,7 +821,7 @@ if __name__ == "__main__":
     logging.info(f'sample name: {bamFilePath}')
     logging.info(f'reference name: {refName}, reference length: {refLength}')
     logging.info(f'regionStart: {regionStart}, regionEnd: {regionEnd}')
-    logging.info(f'depth threshold: {depthThreshold}')
+    logging.info(f'depth threshold percent: {depthThreshold}')
     logging.info(f'entropy threshold: {ethreshold}')
 
     intervals = []  # list of Interval objects. This will be populated if gff file is provided
@@ -870,6 +848,7 @@ if __name__ == "__main__":
         if freqVec.size < 2:
             logging.warning('No SNPs found on the given interval.')
             exit()
+
         # write freqVec to a file
         try:
             np.savetxt(f'{outputDir}/{freqVecCSV}', freqVec, delimiter=',')
@@ -877,6 +856,7 @@ if __name__ == "__main__":
         except IOError:
             logging.error(f'failed to save the csv {outputDir}/{freqVecCSV}.')
             exit()
+
     # if reuse is set then load freqVec
     else:
 
@@ -896,7 +876,12 @@ if __name__ == "__main__":
 
     logging.debug('Starting filterVec()')
     originalFreqVec = freqVec.copy()
-    freqVec, entropyVec = filterVec(freqVec, depthThreshold, ethreshold, entropy_step, lowerLimit, upperLimit)
+
+    # compute avg depth using freqVec
+    avgDepth = freqVec[:,-1].mean()
+    minDepth = avgDepth * depthThreshold / 100
+
+    freqVec, entropyVec = filterVec(freqVec, minDepth, ethreshold, entropy_step, lowerLimit, upperLimit)
     plotScatter(outputDir, freqVec, originalFreqVec, plotName, entropyVec, regionStart, regionEnd, lowerLimit, upperLimit)
 
 
@@ -909,7 +894,7 @@ if __name__ == "__main__":
     # call single strain if not enough variation is found
     if len(freqVec) < 5:
         logging.info(f'Not enough variant sites.')
-        writeResult(bamFilePath, LR , thresh, alpha_level, [1])
+        writeResult(bamFilePath, 0 , 0, alpha_level, [1])
         exit()
 
     # test null and alt hypthesis

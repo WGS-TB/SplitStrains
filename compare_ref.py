@@ -5,7 +5,6 @@ import sys
 def compare_ref(id, originalRefPath, altRefPath, consensusPath):
     """ This function compares consensus seq from splitStains and bcftools with the target genome """
 
-    altRefIndexPath = altRefPath.split('.')[0] + '.subs.index'
 
     with open(originalRefPath, 'r') as f:
         next(f)
@@ -15,8 +14,10 @@ def compare_ref(id, originalRefPath, altRefPath, consensusPath):
         next(f)
         altRefData = f.read().replace('\n', '')
 
+    altRefIndexPath = altRefPath.split('.')[0] + '.subs.index'
     with open(altRefIndexPath, 'r') as f:
         altRefSubsIndex = f.read()
+
     with open(consensusPath, 'r') as f:
         next(f)
         consensusData = f.read().replace('\n', '')
@@ -38,11 +39,12 @@ def compare_ref(id, originalRefPath, altRefPath, consensusPath):
             refDifList.append(i)
         i += 1
 
-    print('# of differences between alt ref and original ref:', len(refDifList))
+    # print('# of differences between alt ref and original ref:', len(refDifList))
 
     """ Compare a consensus sequence obtained from splitStrain.py and bcftools with the altered reference.
         Idealy, this should match. However, since splitStrains filters out bad positions based on different samflags and
         quality settings it is very likely that there would be some some differences. """
+
     consenDifList = []
     i = 0
 
@@ -51,20 +53,19 @@ def compare_ref(id, originalRefPath, altRefPath, consensusPath):
             consenDifList.append(i)
         i += 1
 
-    print('# of differences between consensus and alt ref:', len(consenDifList))
+    # print('# of differences between consensus and alt ref:', len(consenDifList))
     # print(consenDifList)
 
-    """ Check if consensus non matching positions are of those which were introduced by aler_ref.py. Here we find if the SNPs introduced by alter_ref.property
-        are resolved. This is the main metric of success. The error will increase as proportions approach 50:50 ir 10:90 splits """
+    """ Check if consensus non matching positions are of those which were introduced by aler_ref.py. Here we find if the SNPs introduced by alter_ref.property are resolved. This is the main metric of success. The error will increase as proportions approach 50:50 ir 10:90 splits """
     count = 0
     unresolvedList = []
-
     for pos in consenDifList:
+        # if the pos belongs to the true SNP by alterRef.py then count it as unresolved.
         if pos in altRefSubsIndex:
             unresolvedList.append(pos)
             count += 1
 
-    print('# of introduced SNPs that were not resolved by splitStrains.py:', count)
+    # print('# of introduced SNPs that were not resolved by splitStrains.py:', count)
     # print(unresolvedList)
     return unresolvedList
 

@@ -21,6 +21,9 @@ fileExIntervals = '/home/user1/Documents/lab/SplitStrains/refs/excluded-interval
 fileIn = '/home/user1/Documents/lab/SplitStrains/refs/tuberculosis.gff'
 fileOut = '/home/user1/Documents/lab/SplitStrains/refs/tuberculosis.filtered-intervals.gff'
 
+# this txt file will only contain included region coordinates
+file_only_included_intervals = '/home/user1/Documents/lab/SplitStrains/refs/included_intervals.txt'
+
 excluded = []
 excludedIntervals = []
 
@@ -44,27 +47,35 @@ count = 0
 # open files for reading and writing
 with open(fileIn, 'r') as f:
     with open(fileOut, 'w') as o:
+            with open(file_only_included_intervals, 'w') as o_intervals:
 
-        for line in f:
+                for line in f:
 
-            splitLine = line.split()
-            # write headers into output
-            if splitLine[0][0] == '#':
-                o.write(line)
-                continue
-
-            # if not the header do other checks
-            else:
-                regionStart = int(splitLine[3])
-                regionEnd = int(splitLine[4])
-                fields = splitLine[8].split(';')    # get variable like fields
-                locus_tag = fields[-1].split('=')[-1]   # get locus tag
-
-                if locus_tag not in excluded and not isCloseInterval(regionStart, regionEnd, excludedIntervals):
+                    splitLine = line.split()
+                    # write headers into output
+                    if splitLine[0][0] == '#':
                         o.write(line)
-                else:
-                    processedGenes.append(locus_tag)
-                    count += 1
+                        continue
+
+                    # if not the header do other checks
+                    else:
+                        interval_type = splitLine[2]
+                        regionStart = int(splitLine[3])
+                        regionEnd = int(splitLine[4])
+                        fields = splitLine[8].split(';')    # get variable like fields
+                        locus_tag = fields[-1].split('=')[-1]   # get locus tag
+
+                        if locus_tag not in excluded and not isCloseInterval(regionStart, regionEnd, excludedIntervals):
+                                o.write(line)
+
+                                # write all included intervals into a txt file
+                                if interval_type=='gene':
+                                    print('writing gene:', interval_type)
+                                    o_intervals.write(f'{regionStart}, {regionEnd}\n')
+
+                        else:
+                            processedGenes.append(locus_tag)
+                            count += 1
 
 print('excluded count: ', count)
 

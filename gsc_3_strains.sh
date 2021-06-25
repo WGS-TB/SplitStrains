@@ -10,7 +10,7 @@ set -e
 
 
 export depth=300        # fold coverage
-export numSNP=30        # number of snps to alter in the reference genome, changing this requires running alter_ref.py
+export numSNP=300        # number of snps to alter in the reference genome, changing this requires running alter_ref.py
 export start=100000     # where to start on the ref
 export end=3500000
 
@@ -19,7 +19,7 @@ export strainNameB=3_strainB_${numSNP}      # name of the altered strain (minor)
 export strainNameC=3_strainC_${numSNP}
 
 export SAMPLE_PATH=data/mixed_synth_3_samples_${numSNP}snps             # path where to output all fastQ files
-export refDir=refs      # directory for all references references
+export refDir=refs                                       # directory for all references references
 export ref_strainA=${SAMPLE_PATH}/${strainNameA}.fasta   # path to a reference of a major strain
 export ref_strainB=${SAMPLE_PATH}/${strainNameB}.fasta   # path to a reference of a minor strain
 export ref_strainC=${SAMPLE_PATH}/${strainNameC}.fasta
@@ -36,20 +36,20 @@ export REF_PATH=${refDir}/tuberculosis.fna
 export GFF_PATH=${refDir}/tuberculosis.gff
 export REF_BOWTIE_PATH={refDir}/bowtie-index-tuberculosis
 export SAMPLE_PATH=$SAMPLE_PATH
-# export SAMPLE_PATH=./data/mixed_data
 
 alterRef=0       # create altered references
 genReads=0       # generate reads
 trimQ=16
 reuse=1
-entropyFilter=1
+entropyFilter=0
 doAlignment=0
-depthScale=0.75
+depthScale=0.1
 entropyStep=60
-split=0
+split=1
 components=3
 bowtie=0
 model='gmm'
+alpha=0.1
 
 # check if need to generate new references
 if [ $alterRef -eq 1 ]; then
@@ -65,8 +65,7 @@ if [ $alterRef -eq 1 ]; then
 fi
 
 
-mix=( 25-40-35 ) # distance between the means increased
-# mix=( 10-25-65 15-30-55 20-35-45 25-40-35 30-45-25 35-50-15 ) # distance between the means increased
+mix=( 10-25-65 15-30-55 20-35-45 25-40-35 30-45-25 35-50-15 ) # distance between the means increased
 
 for id in ${mix[@]}
 do
@@ -78,6 +77,6 @@ do
         ./gen_reads_3_strain.sh $id
     fi
 
-    ./runSplitStrains.sh $trimQ $id $reuse $entropyFilter $doAlignment $resultFile $depthScale $start $end $entropyStep $split $sampleR1 $sampleR2 $components $bowtie $model
+    ./runSplitStrains.sh $trimQ $id $reuse $entropyFilter $doAlignment $resultFile $depthScale $start $end $entropyStep $split $sampleR1 $sampleR2 $components $bowtie $model $alpha
     # ./consensus.sh $id $trimQ
 done
