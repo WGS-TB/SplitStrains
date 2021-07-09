@@ -14,8 +14,8 @@ export TRIMMOMATIC_PATH=~/bin/Trimmomatic-0.36/trimmomatic-0.36.jar
 
 export refDir=refs                                    # directory for all references references
 # export REF_PATH=${refDir}/tuberculosis-mixInfect-ref.fasta
-export REF_PATH=${refDir}/tuberculosis.fna
-export GFF_PATH=${refDir}/tuberculosis.filtered-intervals.gff
+# export REF_PATH=${refDir}/tuberculosis.fna
+# export GFF_PATH=${refDir}/tuberculosis.filtered-intervals.gff
 export REF_BOWTIE_PATH=${refDir}/bowtie-index-tuberculosis
 export included_intervals=${refDir}/included_intervals.txt
 
@@ -31,8 +31,8 @@ export end=4400000         # where splitstrains ends on the ref
 ####################################
 #### Paths to data directory    ####
 ####################################
-# export SAMPLE_PATH=data/mixed_synth_samples_${numSNP}snps             # path where to output all synth fastQ files
-export SAMPLE_PATH=data/mixed_data                                    # path to real samples.
+export SAMPLE_PATH=data/mixed_synth_samples_${numSNP}snps             # path where to output all synth fastQ files
+# export SAMPLE_PATH=data/mixed_data                                    # path to real samples.
 # export SAMPLE_PATH=data/mixInfect_data/original_fastq                 # path to mixInfect samples.
 # export SAMPLE_PATH=data/mentalist_data_1                              # path to mentalist samples.
 # export SAMPLE_PATH=data/mentalist_data_2                              # path to mentalist samples.
@@ -94,8 +94,8 @@ mkdir -p $SAMPLE_PATH/calls     # directory for bcftools calls
 # mix=( 10 20 30 40 50 60 70 80 90 100 )     # Pedro pure data different coverage
 # mix=( 50 55 60 65 70 75 80 85 90 95 )      # Pedro mixed synth data
 # mix=( 95 90 )            # my synth data
-# mix=( 95 90 85 80 70 60 55 50 )            # my synth data
-mix=( `seq 60` )                           # Inaki data
+mix=( 95 90 85 80 70 60 55 50 )            # my synth data
+# mix=( `seq 60` )                           # Inaki data
 # mix=( `seq 48` )                           # mixInfect data
 # mix=( 6 7 8 9 10 12 16 17 19 20 )            # mixInfect samples for separation
 
