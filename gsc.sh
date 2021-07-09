@@ -14,15 +14,14 @@ export TRIMMOMATIC_PATH=~/bin/Trimmomatic-0.36/trimmomatic-0.36.jar
 
 export refDir=refs                                    # directory for all references references
 # export REF_PATH=${refDir}/tuberculosis-mixInfect-ref.fasta
-# export REF_PATH=${refDir}/tuberculosis.fna
-# export GFF_PATH=${refDir}/tuberculosis.filtered-intervals.gff
-export REF_BOWTIE_PATH=${refDir}/bowtie-index-tuberculosis
+export REF_PATH=${refDir}/tuberculosis.fna
+export GFF_PATH=${refDir}/tuberculosis.filtered-intervals.gff
 export included_intervals=${refDir}/included_intervals.txt
 
 ####################################
 #### Read generation parameters ####
 ####################################
-export numSNP=100         # number of snps to alter in the reference genome
+export numSNP=99         # number of snps to alter in the reference genome
 export depth=60           # fold coverage
 export start=4000         # where splitstrains will start on the ref
 export end=4400000         # where splitstrains ends on the ref
@@ -60,11 +59,11 @@ mkdir -p ${SAMPLE_PATH}/refs
 
 export READLENGTH=40    # trimmomatic minimum read length
 
-alterRef=0             # create altered references. Skip if 0
-genReads=0             # generate reads. Skip if 0
-doAlignment=0          # align generated reads. Skip if 0
+alterRef=1             # create altered references. Skip if 0
+genReads=1             # generate reads. Skip if 0
+doAlignment=1          # align generated reads. Skip if 0
 trimQ=16               # parameter for Trimmomatic
-reuse=1                # splitStrains will reuse the csv from prev run. Set to 1 after the first run!
+reuse=0                # splitStrains will reuse the csv from prev run. Set to 1 after the first run!
 entropyFilter=0        # default 0.7
 minDepth=0.7            # default 0.75
 entropyStep=60         # good value 60
@@ -105,10 +104,10 @@ do
     resultFile="results-id${id}_trim${trimQ}.txt"
 
     # The project masks fastq files as sample{id}_1.fastq.gz and sample{id}_2.fastq.gz
-    # sampleR1="art-sample_${id}_R1.fq"         # synth sample
-    # sampleR2="art-sample_${id}_R2.fq"         # synth sample
-    sampleR1="sample${id}_1.fastq.gz"       # real data sample, mixInfect and mentalist data
-    sampleR2="sample${id}_2.fastq.gz"       # real data sample, mixInfect and mentalist data
+    sampleR1="art-sample_${id}_R1.fq"         # synth sample
+    sampleR2="art-sample_${id}_R2.fq"         # synth sample
+    # sampleR1="sample${id}_1.fastq.gz"       # real data sample, mixInfect and mentalist data
+    # sampleR2="sample${id}_2.fastq.gz"       # real data sample, mixInfect and mentalist data
 
     # generate reads using art_illumina
     if [ $genReads -eq 1 ]; then

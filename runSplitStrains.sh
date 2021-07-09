@@ -50,6 +50,7 @@ then
         samtools view -S -b ${SAMPLE_PATH}/aligned/bowtie-sample-${id}.sam | samtools sort -o ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam -
         samtools index ${SAMPLE_PATH}/aligned/trimmed-${id}.sorted.bam
     else
+        bwa index $REF_PATH
         bwa aln -q 15 -t 6 -R '@RG\tID:mixed\tSM:mixed\tLB:None\tPL:Illumina' $REF_PATH $sampleR1_trimmed > $sampleR1_BWA_out
 
         bwa aln -q 15 -t 6 -R '@RG\tID:mixed\tSM:mixed\tLB:None\tPL:Illumina' $REF_PATH $sampleR2_trimmed > $sampleR2_BWA_out
