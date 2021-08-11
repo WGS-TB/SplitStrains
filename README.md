@@ -18,7 +18,9 @@ Additional software:
 4. art_illumina 2.5.8 (read generator)  
 
 ### Recommendation:
-Use the tool with the bash shell.  
+1. Use the supplied reference genome at `refs` directory for alignment and SplitStrains analysis.
+2. Use the supplied `gff` file at `refs` directory for alignment and SplitStrains analysis.  
+3. Control which sites are considered for analysis by adjusting `-fd`.  Setting this to 75 means ignoring sites with depth coverage less than 75% of the bam avg depth. This can reduce noise and eliminate errors.
 
 ### Usage:
 Run *python splitStrains.py -h* to view help.  
@@ -30,7 +32,7 @@ First run:
 SplitStrains outputs results into stdout.  
 
 ```
-python splitStrains.py -r ref_file -b gff_file -g 2 -s 100 -e 4000000 -o output_dir -fd min_depth indexed_sorted.bam > result.txt
+python splitStrains.py -g 2 -s 100 -e 4000000 -o output_dir -fd min_depth indexed_sorted.bam > result.txt
 ```
 Second run:  
 After the first run, it is possible to reuse (`--reuse`) cached data (*freqVec.csv*) for faster analysis and parameter tunning
