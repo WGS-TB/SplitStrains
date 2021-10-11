@@ -9,8 +9,17 @@ Grounded in a rigorous statistical framework, it is based on formulating, for a 
 
 ### Requirements:
 Python 3.6.9  
-Python libraries listed in *requirements.txt*. This can be used for automatic pip install.  
 Optional: conda 4.5.12  
+Python packages:
+```
+    matplotlib                         3.3.4     
+    mixem                              0.1.4     
+    numpy                              1.15.4    
+    numpydoc                           0.8.0     
+    pysam                              0.15.0    
+    scipy                              1.1.0     
+    seaborn                            0.9.0   
+```
 Additional software:
 1. bwa 0.7.17 (read aligner)
 2. Trimmomatic-0.36 (read quality trimmer)
