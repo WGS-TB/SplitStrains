@@ -49,6 +49,10 @@ After the first run, it is possible to reuse (`--reuse`) cached data (*freqVec.c
 python splitStrains.py --reuse -fe 0.7 -r ref_file -b gff_file -g 2 -s 100 -e 4000000 -o output_dir -fd min_depth indexed_sorted.bam > result.txt
 ```
 The directory *output_dir* contains *freqVec.csv* and plots for visual inspection.
+
+##### Running the test dataset:
+The repo contains the bash script `gsc.sh`. The scipt generates synthetic samples and runs the entire pipeline in one go.  
+
 ### Notes:    
 Before running *splitStrains.py*, make sure that <b>sorted and indexed BAM's</b>  aligned sequences and <b>indexed </b> fasta reference have the same sequence ID. In other words, bam files must be used with the same reference which was used for alignment.
 For example, if BAM aligned sequences refer to "*gi|41353971|emb|AL123456.2|* " then the fasta reference file should start with "*>gi|41353971|emb|AL123456.2|* ".
