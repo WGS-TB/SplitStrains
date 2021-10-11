@@ -50,7 +50,7 @@ python splitStrains.py --reuse -fe 0.7 -r ref_file -b gff_file -g 2 -s 100 -e 40
 ```
 The directory *output_dir* contains *freqVec.csv* and plots for visual inspection.
 
-##### Running the test dataset:
+### Running the test dataset:
 The repo contains the bash script `gsc.sh`. The scipt generates synthetic samples and runs the entire pipeline in one go.  
 
 ### Notes:    
